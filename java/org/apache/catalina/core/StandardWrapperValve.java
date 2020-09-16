@@ -186,6 +186,10 @@ final class StandardWrapperValve
                         if (request.isAsyncDispatching()) {
                             request.getAsyncContextInternal().doInternalDispatch();
                         } else {
+                            /**
+                             * 调用filter链。
+                             * PS：这里request.getRequest返回的是一个RequestFacade实例，门面模式，用于屏蔽Tomcat内部的Request，只提供必要的信息
+                             */
                             filterChain.doFilter(request.getRequest(),
                                     response.getResponse());
                         }

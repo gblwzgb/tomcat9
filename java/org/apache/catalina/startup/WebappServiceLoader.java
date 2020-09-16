@@ -59,6 +59,21 @@ import org.apache.tomcat.util.scan.JarFactory;
  * @see javax.servlet.ServletContainerInitializer
  * @see java.util.ServiceLoader
  */
+
+/**
+ * Java的JAR ServiceLoader的一种变体，它遵循Web应用程序的排除规则。
+ *
+ * 主要用于加载Servlet 8.2.4定义的ServletContainerInitializers。
+ * 此实现不会尝试延迟加载，因为需要容器对所有发现的实现进行内部检查。
+ *
+ * 如果ServletContext定义了ORDERED_LIBS，则仅WEB-INF/lib中在该集中命名的JAR将被包括在搜索提供程序配置文件中；
+ * 如果未定义ORDERED_LIBS，则将在所有JAR中搜索提供程序配置文件。
+ * 由父ClassLoader中的资源定义的提供程序将始终返回。
+ *
+ * 提供的Class将使用上下文的ClassLoader加载。
+ *
+ * @param <T> 待加载的服务类型
+ */
 public class WebappServiceLoader<T> {
     private static final String CLASSES = "/WEB-INF/classes/";
     private static final String LIB = "/WEB-INF/lib/";
@@ -98,10 +113,19 @@ public class WebappServiceLoader<T> {
      * @return an unmodifiable collection of service providers
      * @throws IOException if there was a problem loading any service
      */
+    /**
+     * 加载提供程序的服务类型。如果应用程序依赖于容器提供的服务，则将在应用程序定义的服务之前加载容器定义的服务。
+     * 请注意，服务总是通过Context（Web应用程序）类加载器加载的，因此应用程序有可能提供通常由Container提供的服务的替代实现。
+     *
+     * @param serviceType
+     * @return
+     * @throws IOException
+     */
     public List<T> load(Class<T> serviceType) throws IOException {
         String configFile = SERVICES + serviceType.getName();
 
         // Obtain the Container provided service configuration files.
+        // 获取容器提供的服务配置文件。
         ClassLoader loader = context.getParentClassLoader();
         Enumeration<URL> containerResources;
         if (loader == null) {

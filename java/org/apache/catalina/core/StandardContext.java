@@ -333,6 +333,7 @@ public class StandardContext extends ContainerBase
      * Graal cannot actually load a class from the webapp classloader,
      * so delegate by default.
      */
+    // 父优先，还是子优先。true代表父优先
     private boolean delegate = JreCompat.isGraalAvailable();
 
 
@@ -4928,6 +4929,9 @@ public class StandardContext extends ContainerBase
             resourcesStart();
         }
 
+        /**
+         * 设置加载WebappClassLoader的Loader
+         */
         if (getLoader() == null) {
             WebappLoader webappLoader = new WebappLoader();
             webappLoader.setDelegate(getDelegate());
@@ -5099,11 +5103,13 @@ public class StandardContext extends ContainerBase
             }
 
             // We put the resources into the servlet context
+            // 我们将资源放入servlet上下文中
             if (ok) {
                 getServletContext().setAttribute
                     (Globals.RESOURCES_ATTR, getResources());
 
                 if (getInstanceManager() == null) {
+                    /** 创建并设置一个DefaultInstanceManager */
                     setInstanceManager(createInstanceManager());
                 }
                 getServletContext().setAttribute(

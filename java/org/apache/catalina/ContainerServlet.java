@@ -25,6 +25,12 @@ package org.apache.catalina;
  *
  * @author Craig R. McClanahan
  */
+
+/**
+ * ContainerServlet是可以访问Catalina内部功能的servlet，
+ * 是从Catalina类加载器而不是Web应用程序类加载器加载的。
+ * 每当此Servlet的新实例投入使用时，容器都必须调用属性设置器方法。
+ */
 public interface ContainerServlet {
 
     /**

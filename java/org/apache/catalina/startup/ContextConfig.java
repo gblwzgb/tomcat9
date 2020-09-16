@@ -185,6 +185,7 @@ public class ContextConfig implements LifecycleListener {
     /**
      * The Context we are associated with.
      */
+    // 我们关联的上下文。
     protected volatile Context context = null;
 
 
@@ -197,6 +198,7 @@ public class ContextConfig implements LifecycleListener {
     /**
      * Track any fatal errors during startup configuration processing.
      */
+    // 在启动配置处理期间跟踪所有致命错误。
     protected boolean ok = false;
 
 
@@ -1075,6 +1077,11 @@ public class ContextConfig implements LifecycleListener {
      * an application's web.xml takes precedence over the host level or global
      * web.xml file.
      */
+    /**
+     * 扫描适用于Web应用程序的web.xml文件，并使用规范中定义的规则合并它们。
+     * 对于配置重复的全局web.xml文件，以最具体的级别为准。
+     * 即，应用程序的web.xml优先于主机级别或全局web.xml文件。
+     */
     protected void webConfig() {
         /*
          * Anything and everything can override the global and host defaults.
@@ -1113,6 +1120,7 @@ public class ContextConfig implements LifecycleListener {
         WebXml webXml = createWebXml();
 
         // Parse context level web.xml
+        // 解析上下文级别的web.xml
         InputSource contextWebXml = getContextWebXmlSource();
         if (!webXmlParser.parseWebXml(contextWebXml, webXml, false)) {
             ok = false;
@@ -1126,45 +1134,57 @@ public class ContextConfig implements LifecycleListener {
         // provided by the container. If any of the application JARs have a
         // web-fragment.xml it will be parsed at this point. web-fragment.xml
         // files are ignored for container provided JARs.
+        // 步骤一：识别与应用程序一起打包的所有JAR，以及由容器提供的JAR。
+        //        如果任何应用程序JAR都具有web-fragment.xml，则将在此时进行解析。
+        //        容器提供的JAR会忽略web-fragment.xml文件。
         Map<String,WebXml> fragments = processJarsForWebFragments(webXml, webXmlParser);
 
         // Step 2. Order the fragments.
+        // 步骤二：fragments排序
         Set<WebXml> orderedFragments = null;
         orderedFragments =
                 WebXml.orderWebFragments(webXml, fragments, sContext);
 
         // Step 3. Look for ServletContainerInitializer implementations
+        // 步骤三：寻找ServletContainerInitializer实现
         if (ok) {
             processServletContainerInitializers();
         }
 
         if  (!webXml.isMetadataComplete() || typeInitializerMap.size() > 0) {
             // Steps 4 & 5.
+            // 步骤四 & 五
             processClasses(webXml, orderedFragments);
         }
 
         if (!webXml.isMetadataComplete()) {
-            // Step 6. Merge web-fragment.xml files into the main web.xml
-            // file.
+            // Step 6. Merge web-fragment.xml files into the main web.xml file.
+            // 步骤六：将web-fragment.xml文件合并到主web.xml文件中。
             if (ok) {
                 ok = webXml.merge(orderedFragments);
             }
 
             // Step 7a
             // merge tomcat-web.xml
+            // 步骤七a：合并tomcat-web.xml
             webXml.merge(tomcatWebXml);
 
             // Step 7b. Apply global defaults
             // Have to merge defaults before JSP conversion since defaults
             // provide JSP servlet definition.
+            // 步骤七b：应用全局默认值
+            //         由于默认值，因此必须在JSP转换之前合并默认值
+            //         提供JSP Servlet定义。
             webXml.merge(defaults);
 
             // Step 8. Convert explicitly mentioned jsps to servlets
+            // 步骤八：将明确提到的jsps转换为servlet
             if (ok) {
                 convertJsps(webXml);
             }
 
             // Step 9. Apply merged web.xml to Context
+            // 步骤九：将合并的web.xml应用于上下文
             if (ok) {
                 configureContext(webXml);
             }

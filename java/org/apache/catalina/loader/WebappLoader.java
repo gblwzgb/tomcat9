@@ -61,6 +61,15 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
+
+/**
+ * Classloader实现专门用于以最有效的方式处理Web应用程序，
+ * 同时了解Catalina(对资源​​的所有访问均通过org.apache.catalina.WebResourceRoot进行)。
+ * 该类加载器支持检测已修改的Java类，该类可用于实现auto-reload支持。
+ *
+ * 在调用start()之前，通过其上下文的Resources子级配置此类加载器。
+ * 当需要一个新的类时，将首先查阅这些资源以查找该类。如果不存在，则将使用系统类加载器。
+ */
 public class WebappLoader extends LifecycleMBeanBase
     implements Loader, PropertyChangeListener {
 
@@ -112,6 +121,7 @@ public class WebappLoader extends LifecycleMBeanBase
      * The "follow standard delegation model" flag that will be used to
      * configure our ClassLoader.
      */
+    // 是否父优先，默认false，即打破双亲委派的子优先
     private boolean delegate = false;
 
 
@@ -391,10 +401,14 @@ public class WebappLoader extends LifecycleMBeanBase
         }
 
         // Construct a class loader based on our current repositories list
+        // 根据我们当前的存储库列表构造一个类加载器
         try {
 
+            // 创建一个ParallelWebappClassLoader
             classLoader = createClassLoader();
+            // 设置资源
             classLoader.setResources(context.getResources());
+            // 父加载器优先还是子加载器优先
             classLoader.setDelegate(this.delegate);
 
             // Configure our repositories
@@ -402,6 +416,7 @@ public class WebappLoader extends LifecycleMBeanBase
 
             setPermissions();
 
+            // 启动WebappClassLoaderBase，内部加载了resource
             classLoader.start();
 
             String contextName = context.getName();
@@ -507,10 +522,13 @@ public class WebappLoader extends LifecycleMBeanBase
     private WebappClassLoaderBase createClassLoader()
         throws Exception {
 
+        // 创建了一个ParallelWebappClassLoader的Class
         Class<?> clazz = Class.forName(loaderClass);
         WebappClassLoaderBase classLoader = null;
 
         if (parentClassLoader == null) {
+            // 这里默认是commonClassLoader，是递归上去，然后从StandardHost中拿到的。
+            // Host的设置在Digester的rule阶段
             parentClassLoader = context.getParentClassLoader();
         } else {
             context.setParentClassLoader(parentClassLoader);
@@ -518,6 +536,7 @@ public class WebappLoader extends LifecycleMBeanBase
         Class<?>[] argTypes = { ClassLoader.class };
         Object[] args = { parentClassLoader };
         Constructor<?> constr = clazz.getConstructor(argTypes);
+        // 通过反射new一个classLoader，并把parentClassLoader（commonClassLoader）作为这个classLoader的parent。
         classLoader = (WebappClassLoaderBase) constr.newInstance(args);
 
         return classLoader;
@@ -566,6 +585,7 @@ public class WebappLoader extends LifecycleMBeanBase
     private void setClassPath() {
 
         // Validate our current state information
+        // 验证我们的当前状态信息
         if (context == null)
             return;
         ServletContext servletContext = context.getServletContext();

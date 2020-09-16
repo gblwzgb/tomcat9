@@ -78,6 +78,9 @@ public class HostRuleSet implements RuleSet {
                                  "org.apache.catalina.core.StandardHost",
                                  "className");
         digester.addSetProperties(prefix + "Host");
+        /**
+         * 将Engine记录的classLoader，复制到Host中
+         */
         digester.addRule(prefix + "Host",
                          new CopyParentClassLoaderRule());
         digester.addRule(prefix + "Host",

@@ -33,6 +33,7 @@ import org.apache.tomcat.util.res.StringManager;
  * Provides introspection utilities that either require knowledge of Tomcat
  * internals or are solely used by Tomcat internals.
  */
+// 提供需要Tomcat内部知识或仅由Tomcat内部使用的自省实用程序。
 public class Introspection {
 
     private static final StringManager sm =
@@ -146,10 +147,12 @@ public class Introspection {
      * @return the loaded class or <code>null</code> if loading failed
      */
     public static Class<?> loadClass(Context context, String className) {
+        // 获取Context -> WebappLoader -> WebappClassLoaderBase
         ClassLoader cl = context.getLoader().getClassLoader();
         Log log = context.getLogger();
         Class<?> clazz = null;
         try {
+            // 使用WebappClassLoaderBase去加载servlet的class
             clazz = cl.loadClass(className);
         } catch (ClassNotFoundException | NoClassDefFoundError | ClassFormatError e) {
             log.debug(sm.getString("introspection.classLoadFailed", className), e);

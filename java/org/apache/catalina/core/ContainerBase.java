@@ -544,9 +544,11 @@ public abstract class ContainerBase extends LifecycleMBeanBase
     public ClassLoader getParentClassLoader() {
         if (parentClassLoader != null)
             return parentClassLoader;
+        // 如果不存在，则递归获取父容器的类加载器。
         if (parent != null) {
             return parent.getParentClassLoader();
         }
+        // 还是取不到则用系统类加载器
         return ClassLoader.getSystemClassLoader();
     }
 

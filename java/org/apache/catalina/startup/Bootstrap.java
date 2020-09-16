@@ -46,6 +46,12 @@ import org.apache.juli.logging.LogFactory;
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
+
+/**
+ * 用于Catalina的Bootstrap装载程序。
+ * 此应用程序构造一个类加载器，用于加载Catalina内部类（通过累积在"catalina.home"下"server"目录中找到的所有JAR文件），并开始容器的常规执行。
+ * 这种环回方法的目的是将Catalina内部类(以及它们依赖的任何其他类，例如XML解析器)保持在系统类路径之外，因此对于应用程序级类不可见。
+ */
 public final class Bootstrap {
 
     private static final Log log = LogFactory.getLog(Bootstrap.class);
@@ -142,12 +148,16 @@ public final class Bootstrap {
 
     private void initClassLoaders() {
         try {
+            // 创建一个commonClassLoader
             commonLoader = createClassLoader("common", null);
             if (commonLoader == null) {
                 // no config file, default to this loader - we might be in a 'single' env.
+                // 没有配置文件，默认为该当前线程的类加载器-我们可能位于“单个”环境中。（即没有多个webapp？）
                 commonLoader = this.getClass().getClassLoader();
             }
+            // 创建一个serverClassLoader，默认直接使用上面的commonClassLoader
             catalinaLoader = createClassLoader("server", commonLoader);
+            // 创建一个sharedClassLoader，默认直接使用上面的commonClassLoader
             sharedLoader = createClassLoader("shared", commonLoader);
         } catch (Throwable t) {
             handleThrowable(t);
@@ -160,21 +170,26 @@ public final class Bootstrap {
     private ClassLoader createClassLoader(String name, ClassLoader parent)
         throws Exception {
 
+        // 从catalina.properties中读取value
         String value = CatalinaProperties.getProperty(name + ".loader");
         if ((value == null) || (value.equals("")))
             return parent;
 
+        // 填充${}占位符
         value = replace(value);
 
         List<Repository> repositories = new ArrayList<>();
 
+        // 将String分隔成String数组
         String[] repositoryPaths = getPaths(value);
 
         for (String repository : repositoryPaths) {
             // Check for a JAR URL repository
             try {
+                // 未使用，检测一下资源是否可用
                 @SuppressWarnings("unused")
                 URL url = new URL(repository);
+                // 包成Repository
                 repositories.add(new Repository(repository, RepositoryType.URL));
                 continue;
             } catch (MalformedURLException e) {
@@ -247,10 +262,13 @@ public final class Bootstrap {
      * Initialize daemon.
      * @throws Exception Fatal initialization error
      */
+    // 初始化，主要是创建了三种类加载器，创建了Catalina
     public void init() throws Exception {
 
+        // 初始化类加载器
         initClassLoaders();
 
+        // 将catalinaLoader绑定到当前线程中，默认是commonClassLoader
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
         SecurityClassLoad.securityClassLoad(catalinaLoader);
@@ -258,8 +276,9 @@ public final class Bootstrap {
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
+        // 这里用自定义的serverClassLoader加载器，隔离应用对Catalina的访问（不可见）
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
-        // todo：这里为啥要用反射？
+        // 通过反射创建一个Catalina类
         Object startupInstance = startupClass.getConstructor().newInstance();
 
         // Set the shared extensions class loader
@@ -270,8 +289,9 @@ public final class Bootstrap {
         paramTypes[0] = Class.forName("java.lang.ClassLoader");
         Object paramValues[] = new Object[1];
         paramValues[0] = sharedLoader;
-        Method method =
-            startupInstance.getClass().getMethod(methodName, paramTypes);
+        // 获取Catalina.setParentClassLoader方法
+        Method method = startupInstance.getClass().getMethod(methodName, paramTypes);
+        // 调用Catalina.setParentClassLoader方法，传入sharedClassLoader
         method.invoke(startupInstance, paramValues);
 
         catalinaDaemon = startupInstance;
@@ -296,12 +316,13 @@ public final class Bootstrap {
             param = new Object[1];
             param[0] = arguments;
         }
+        // 获取Catalina的load方法
         Method method =
             catalinaDaemon.getClass().getMethod(methodName, paramTypes);
         if (log.isDebugEnabled()) {
             log.debug("Calling startup class " + method);
         }
-        // 调用的是：org.apache.catalina.startup.Catalina.load()
+        // 反射调用的是：org.apache.catalina.startup.Catalina.load()
         method.invoke(catalinaDaemon, param);
     }
 
@@ -341,7 +362,9 @@ public final class Bootstrap {
             init();
         }
 
+        // 获取Catalina.start()方法
         Method method = catalinaDaemon.getClass().getMethod("start", (Class [])null);
+        // 调用Catalina.start()方法
         method.invoke(catalinaDaemon, (Object [])null);
     }
 
@@ -442,6 +465,7 @@ public final class Bootstrap {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    // 初始化bootstrap
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -472,7 +496,9 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);
+                // 内部调用了Catalina.load()
                 daemon.load(args);
+                // 内部调用了Catalina.start()
                 daemon.start();
                 if (null == daemon.getServer()) {
                     System.exit(1);

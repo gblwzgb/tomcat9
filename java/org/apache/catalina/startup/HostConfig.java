@@ -1121,17 +1121,20 @@ public class HostConfig implements LifecycleListener {
                         cn.getPath(), xml, xmlCopy));
                 context = new FailedContext();
             } else {
+                /** xml里没配置context，直接构造一个 */
                 context = (Context) Class.forName(contextClass).getConstructor().newInstance();
             }
 
             Class<?> clazz = Class.forName(host.getConfigClass());
             LifecycleListener listener = (LifecycleListener) clazz.getConstructor().newInstance();
+            // 给context添加一个生命周期监听器
             context.addLifecycleListener(listener);
 
             context.setName(cn.getName());
             context.setPath(cn.getPath());
             context.setWebappVersion(cn.getVersion());
             context.setDocBase(cn.getBaseName());
+            /** 将Context加到Host中，内部会触发Context的Start */
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);

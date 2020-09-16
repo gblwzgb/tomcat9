@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.naming.NamingException;
 
+// filter、listener、servlet通过这个创建
 public interface InstanceManager {
 
     Object newInstance(Class<?> clazz) throws IllegalAccessException, InvocationTargetException,

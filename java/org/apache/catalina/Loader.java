@@ -47,6 +47,18 @@ import java.beans.PropertyChangeListener;
  *
  * @author Craig R. McClanahan
  */
+
+/**
+ * Loader表示Java ClassLoader的实现，容器可以使用它来加载旨在根据请求重新加载的类文件(在与Loader关联的存储库中)，
+ * 以及用于检测基础文件是否发生更改的机制资料库。
+ *
+ * 为了使Loader实现与实现重载的Context实现一起成功运行，它必须遵守以下约束：
+ * - 必须实现生命周期，以便Context可以指示需要新的类加载器。
+ * - start()方法必须无条件创建新的ClassLoader实现。
+ * - stop()方法必须放弃对先前使用的ClassLoader的引用，以便可以垃圾收集类加载器，该类加载器加载的所有类以及这些类的所有对象。
+ * - 必须允许在相同的Loader实例上调用stop()，再调用start()。
+ * - 基于实现选择的策略，当检测到对此类加载器加载的一个或多个类文件进行更改时，必须在拥有的Context上调用Context.reload()方法。
+ */
 public interface Loader {
 
 

@@ -277,6 +277,14 @@
         </init-param>
         <load-on-startup>3</load-on-startup>
     </servlet>
+    <servlet>
+        <servlet-name>demo1</servlet-name>
+        <servlet-class>com.ggj.center.commissionservice.biz.account.impl.Test</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>demo1</servlet-name>
+        <url-pattern>/test</url-pattern>
+    </servlet-mapping>
 
 
   <!-- NOTE: An SSI Filter is also available as an alternative SSI          -->

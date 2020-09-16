@@ -156,6 +156,27 @@ import org.apache.tomcat.util.res.StringManager;
  * @see <a href="https://svn.apache.org/repos/asf/tomcat/trunk/test/org/apache/catalina/startup/TestTomcat.java">TestTomcat</a>
  * @author Costin Manolache
  */
+
+/**
+ * 用于嵌入/单元测试的最小的tomcat启动器。
+ * Tomcat支持多种样式的配置和启动-最常见和稳定的是基于server.xml的服务器，它在org.apache.catalina.startup.Bootstrap中实现。
+ * 此类用于嵌入tomcat的应用程序。
+ * 要求：
+ * 所有tomcat类以及可能的servlet都在类路径中。 （例如，所有内容都放在一个大罐子中，或者在Eclipse CP中，或者在任何其他组合中）
+ * 我们需要一个临时目录来存放工作文件
+ * 不需要配置文件。如果您的Web应用程序带有web.xml文件，则此类提供了使用的方法，但它是可选的-您可以使用自己的servlet。
+ * 有多种“添加”方法可配置servlet和webapp。默认情况下，这些方法会创建一个简单的内存安全领域并应用它。如果需要更复杂的安全处理，则可以定义此类的子类。
+ * 此类提供了一组用于配置Web应用程序上下文的便捷方法。方法addWebapp（）的所有重载。这些方法等效于将Web应用程序添加到主机的appBase（通常是webapps目录）。
+ * 这些方法将创建一个Context，并使用与conf/web.xml提供的默认值等效的属性对其进行配置（有关详细信息，请参见initWebappDefaults(String))，然后将Context添加到主机。
+ * 这些方法不使用全局默认的web.xml。相反，他们添加了LifecycleListener来配置默认值。与应用程序打包在一起的任何WEB-INF/web.xml和META-INF/context.xml都将被正常处理。
+ * 将应用常规的Web片段和javax.servlet.ServletContainerInitializer处理。
+ * 在复杂的情况下，您可能更喜欢使用普通的Tomcat API创建webapp上下文。例如，您可能需要在调用Host.addChild(Container)之前安装自定义的Loader。
+ * 要复制addWebapp方法的基本行为，您可能需要调用此类的两个方法：noDefaultWebXmlPath()和getDefaultWebXmlListener()。
+ * getDefaultWebXmlListener()返回添加了标准DefaultServlet，JSP处理和欢迎文件的LifecycleListener。如果添加此侦听器，则必须防止Tomcat将任何标准全局web.xml应用于...
+ * noDefaultWebXmlPath()返回一个虚拟路径名以进行配置，以防止ContextConfig尝试应用全局web.xml文件。
+ * 此类提供main()和一些简单的CLI参数，请参阅doc的setter。它可以用于简单的测试和演示。
+ */
+// 机翻，未核对
 public class Tomcat {
 
     private static final StringManager sm = StringManager.getManager(Tomcat.class);

@@ -98,6 +98,7 @@ public class Catalina {
     /**
      * The shared extensions class loader for this server.
      */
+    // 此服务器的共享扩展类加载器。
     protected ClassLoader parentClassLoader =
         Catalina.class.getClassLoader();
 
@@ -424,6 +425,9 @@ public class Catalina {
         digester.addRuleSet(new NamingRuleSet("Server/Service/Engine/Host/Context/"));
 
         // When the 'engine' is found, set the parentClassLoader.
+        /**
+         * 给Engine容器，设置一个类加载器，这里默认是一个commonClassLoader
+         */
         digester.addRule("Server/Service/Engine",
                          new SetParentClassLoaderRule(parentClassLoader));
         addClusterRuleSet(digester, "Server/Service/Engine/Cluster/");
@@ -589,7 +593,7 @@ public class Catalina {
             return;
         }
 
-        // 设置一些属性到Server中，server怎么创建的没看到
+        // 设置一些属性到Server中，server怎么创建？在Digester中：org.apache.catalina.startup.Catalina.createStartDigester
         getServer().setCatalina(this);
         getServer().setCatalinaHome(Bootstrap.getCatalinaHomeFile());
         getServer().setCatalinaBase(Bootstrap.getCatalinaBaseFile());
@@ -599,7 +603,7 @@ public class Catalina {
 
         // Start the new server
         try {
-            // 启动Server
+            // 初始化Server
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
@@ -650,6 +654,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            // 启动server
             getServer().start();
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);

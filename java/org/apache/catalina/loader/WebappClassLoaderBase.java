@@ -291,6 +291,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
     /**
      * Associated web resources for this webapp.
      */
+    // 此Webapp的相关Web资源。
     protected WebResourceRoot resources = null;
 
 
@@ -1552,6 +1553,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
         for (WebResource jar : jars) {
             if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {
                 localRepositories.add(jar.getURL());
+                // 记录jar的最后更新时间，用于热（加载/部署？）
                 jarModificationTimes.put(
                         jar.getName(), Long.valueOf(jar.getLastModified()));
             }

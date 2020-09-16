@@ -114,8 +114,10 @@ public class DefaultInstanceManager implements InstanceManager {
             Map<String, Map<String, String>> injectionMap,
             org.apache.catalina.Context catalinaContext,
             ClassLoader containerClassLoader) {
+        // 这个是ParallelWebappClassLoader
         classLoader = catalinaContext.getLoader().getClassLoader();
         privileged = catalinaContext.getPrivileged();
+        // 是一个AppClassLoader
         this.containerClassLoader = containerClassLoader;
         ignoreAnnotations = catalinaContext.getIgnoreAnnotations();
         Log log = catalinaContext.getLogger();
@@ -517,6 +519,7 @@ public class DefaultInstanceManager implements InstanceManager {
                 throw new RuntimeException(t);
             }
         } else {
+            // 默认进这里
             clazz = loadClass(className, classLoader);
         }
         checkAccess(clazz);
@@ -531,11 +534,13 @@ public class DefaultInstanceManager implements InstanceManager {
         try {
             Class<?> clazz = containerClassLoader.loadClass(className);
             if (ContainerServlet.class.isAssignableFrom(clazz)) {
+                // 看这个ContainerServlet接口的定义，是可以访问Catalina的Servlet，所以用这个加载器
                 return clazz;
             }
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
         }
+        // Servlet使用ParallelWebappClassLoader，做到不同Servlet之间的隔离。但是实际上还是AppClassLoader???
         return classLoader.loadClass(className);
     }
 
