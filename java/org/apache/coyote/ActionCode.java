@@ -18,6 +18,11 @@
 package org.apache.coyote;
 
 /**
+ * ActionCodes 表示从 servlet 容器到 coyote connector 的回调。
+ * 动作由 ProtocolHandler 使用 ActionHook 接口实现。
+ */
+
+/**
  * ActionCodes represent callbacks from the servlet container to the coyote
  * connector. Actions are implemented by ProtocolHandler, using the ActionHook
  * interface.

@@ -148,18 +148,23 @@ public class Response implements HttpServletResponse {
     /**
      * The associated output buffer.
      */
+    // 服务端对用户端的响应，会先写到这里面，然后再通过 socket 发送给用户端
     protected final OutputBuffer outputBuffer;
 
 
     /**
      * The associated output stream.
      */
+    // 懒加载，在调用 getOutputStream 后才会创建，会用到 outputBuffer
+    // 用于写字节流，附加到 outputBuffer 中。
     protected CoyoteOutputStream outputStream;
 
 
     /**
      * The associated writer.
      */
+    // 懒加载，在调用 getWriter 后才会创建，会用到 outputBuffer
+    // 提供给用户写字符流，最后还是会转换成字节流，然后附加到 outputBuffer 中的。
     protected CoyoteWriter writer;
 
 

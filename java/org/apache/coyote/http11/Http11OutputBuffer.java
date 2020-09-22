@@ -29,6 +29,12 @@ import org.apache.tomcat.util.net.SocketWrapperBase;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
+ * 为 HTTP headers 提供缓冲（允许响应在提交之前复位），
+ * 并提供用于套接字的链接以写入标头（一旦提交）和响应主体。
+ * 请注意，响应主体的缓冲发生在较高级别。
+ */
+
+/**
  * Provides buffering for the HTTP headers (allowing responses to be reset
  * before they have been committed) and the link to the Socket for writing the
  * headers (once committed) and the response body. Note that buffering of the
@@ -49,6 +55,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
     /**
      * Associated Coyote response.
      */
+    // 关联的 Coyote response
     protected final Response response;
 
 
@@ -67,24 +74,28 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
     /**
      * Filter library for processing the response body.
      */
+    // 在 Http11Processor 的构造方法中添加，顺序在 org.apache.coyote.http11.Constants.IDENTITY_FILTER 中
     protected OutputFilter[] filterLibrary;
 
 
     /**
      * Active filters for the current request.
      */
+    // 当前请求的活动过滤器。
     protected OutputFilter[] activeFilters;
 
 
     /**
      * Index of the last active filter.
      */
+    // 其实就是最后添加的 filter 的位置，因为 filter 的执行顺序是：后添加的先执行。
     protected int lastActiveFilter;
 
 
     /**
      * Underlying output buffer.
      */
+    // SocketOutputBuffer 实例
     protected HttpOutputBuffer outputStreamOutputBuffer;
 
 
@@ -154,20 +165,26 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
      *
      * @param filter The filter to add
      */
+    // 一个反向的链表，最后加的 filter 先执行。
     public void addActiveFilter(OutputFilter filter) {
 
         if (lastActiveFilter == -1) {
+            // 如果还没有 activeFilter，则 组装链 filter -> outputStreamOutputBuffer
             filter.setBuffer(outputStreamOutputBuffer);
-        } else {
+        } else {  // 如果已经有 activeFilter
             for (int i = 0; i <= lastActiveFilter; i++) {
                 if (activeFilters[i] == filter)
+                    // 到这里说明 filter 已经在 activeFilters 中了，忽略
                     return;
             }
+            // filter -> 之前的链
             filter.setBuffer(activeFilters[lastActiveFilter]);
         }
 
+        // 添加到数组中
         activeFilters[++lastActiveFilter] = filter;
 
+        // 建立关联
         filter.setResponse(response);
     }
 
@@ -177,6 +194,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
     @Override
     public int doWrite(ByteBuffer chunk) throws IOException {
 
+        // 写 body 之前，先执行 commit，即先写 header
         if (!response.isCommitted()) {
             // Send the connector a request for commit. The connector should
             // then validate the headers, send them (using sendHeaders) and
@@ -226,8 +244,10 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
         }
 
         if (lastActiveFilter == -1) {
+            // 没有 filter
             outputStreamOutputBuffer.end();
         } else {
+            // 有 filter，后添加的先执行。
             activeFilters[lastActiveFilter].end();
         }
 
@@ -535,6 +555,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
                 int len = chunk.remaining();
                 SocketWrapperBase<?> socketWrapper = Http11OutputBuffer.this.socketWrapper;
                 if (socketWrapper != null) {
+                    // 写到 socket buffer 中。
                     socketWrapper.write(isBlocking(), chunk);
                 } else {
                     throw new CloseNowException(sm.getString("iob.failedwrite"));
@@ -554,6 +575,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
             return byteCount;
         }
 
+        // 和下面的 flush 没啥区别
         @Override
         public void end() throws IOException {
             socketWrapper.flush(true);

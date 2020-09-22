@@ -306,12 +306,18 @@ public class Catalina {
 
         // Configure the actions we will be using  (配置我们将要使用的操作)
         /**
-         * 解析到这个pattern后，会使用的Rule。Rule里会通过反射调用方法，所以这里也需要指定具体的方法。
+         * 解析到这个pattern后，会使用的Rule。
+         * Rule里会通过反射调用方法，所以这里也需要指定具体的方法。
+         * 见 ObjectCreateRule#begin(...)
+         * 意思是：
+         * 解析到 Server 的标签时，则创建类。优先取属性值配置的 className，没配置则使用默认的 org.apache.catalina.core.StandardServer
          */
         digester.addObjectCreate("Server",
                                  "org.apache.catalina.core.StandardServer",
                                  "className");
+        // 新增 SetPropertiesRule
         digester.addSetProperties("Server");
+        // 新增 SetNextRule
         // 这里调用的是：org.apache.catalina.startup.Catalina.setServer
         digester.addSetNext("Server",
                             "setServer",
@@ -573,7 +579,7 @@ public class Catalina {
         File file = configFile();
 
         // Create and execute our Digester
-        // 创建和执行解析器
+        // 创建和执行解析器，重要
         Digester digester = createStartDigester();
 
         /**
@@ -603,7 +609,8 @@ public class Catalina {
 
         // Start the new server
         try {
-            // 初始化Server
+            // 初始化 Server -> Service -> Engine
+            //                         -> Connector
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
@@ -654,7 +661,8 @@ public class Catalina {
 
         // Start the new server
         try {
-            // 启动server
+            // 启动 Server -> Service -> Engine -> (后面几个都是丢线程池启动 Host -> Context -> Wrapper)
+            //                       -> Connector
             getServer().start();
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);

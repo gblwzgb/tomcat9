@@ -51,6 +51,7 @@ import org.apache.juli.logging.LogFactory;
  *
  * @author Craig R. McClanahan
  */
+// 在 org.apache.catalina.startup.EngineRuleSet.addRuleInstances 中创建
 public class StandardEngine extends ContainerBase implements Engine {
 
     private static final Log log = LogFactory.getLog(StandardEngine.class);

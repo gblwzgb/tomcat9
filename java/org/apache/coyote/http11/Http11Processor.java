@@ -817,6 +817,7 @@ public class Http11Processor extends AbstractProcessor {
     /**
      * When committing the response, we have to validate the set of headers, as
      * well as setup the response filters.
+     * （译：提交响应时，我们必须验证 set of headers ，并设置 response filters。）
      */
     @Override
     protected final void prepareResponse() throws IOException {
@@ -824,6 +825,7 @@ public class Http11Processor extends AbstractProcessor {
         boolean entityBody = true;
         contentDelimitation = false;
 
+        // 获取 Http11OutputBuffer 中的所有过滤器
         OutputFilter[] outputFilters = outputBuffer.getFilters();
 
         if (http09 == true) {
@@ -898,8 +900,10 @@ public class Http11Processor extends AbstractProcessor {
             // If the response code supports an entity body and we're on
             // HTTP 1.1 then we chunk unless we have a Connection: close header
             if (http11 && entityBody && !connectionClosePresent) {
+                // 一般会进这里
                 outputBuffer.addActiveFilter(outputFilters[Constants.CHUNKED_FILTER]);
                 contentDelimitation = true;
+                // header 的 Transfer-Encoding 设置为 chunked
                 headers.addValue(Constants.TRANSFERENCODING).setString(Constants.CHUNKED);
             } else {
                 outputBuffer.addActiveFilter(outputFilters[Constants.IDENTITY_FILTER]);
@@ -984,6 +988,7 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         // Build the response header
+        // 构建一个响应头
         try {
             outputBuffer.sendStatus();
 
@@ -1000,6 +1005,7 @@ public class Http11Processor extends AbstractProcessor {
             throw t;
         }
 
+        // 发送 header
         outputBuffer.commit();
     }
 

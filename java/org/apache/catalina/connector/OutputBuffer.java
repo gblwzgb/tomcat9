@@ -217,6 +217,7 @@ public class OutputBuffer extends Writer {
      *
      * @throws IOException An underlying IOException occurred
      */
+    // 关闭输出缓冲区。如果尚未提交响应，这将尝试计算响应大小。
     @Override
     public void close() throws IOException {
 
@@ -230,6 +231,7 @@ public class OutputBuffer extends Writer {
         // If there are chars, flush all of them to the byte buffer now as bytes are used to
         // calculate the content-length (if everything fits into the byte buffer, of course).
         if (cb.remaining() > 0) {
+            // 把 CharBuffer 的数据刷到 ByteBuffer 中
             flushCharBuffer();
         }
 
@@ -241,13 +243,16 @@ public class OutputBuffer extends Writer {
             // setting a value of zero here will result in an explicit content
             // length of zero being set on the response.
             if (!coyoteResponse.isCommitted()) {
+                // 设置内容长度
                 coyoteResponse.setContentLength(bb.remaining());
             }
         }
 
         if (coyoteResponse.getStatus() == HttpServletResponse.SC_SWITCHING_PROTOCOLS) {
+            // 切换协议？
             doFlush(true);
         } else {
+            // 进这里，写到 socket buffer 中
             doFlush(false);
         }
         closed = true;
@@ -258,6 +263,7 @@ public class OutputBuffer extends Writer {
         Request req = (Request) coyoteResponse.getRequest().getNote(CoyoteAdapter.ADAPTER_NOTES);
         req.inputBuffer.close();
 
+        // 执行 close 动作，一般来说是写 end chunk
         coyoteResponse.action(ActionCode.CLOSE, null);
     }
 
@@ -288,6 +294,7 @@ public class OutputBuffer extends Writer {
         try {
             doFlush = true;
             if (initial) {
+                // 发送 Header
                 coyoteResponse.sendHeaders();
                 initial = false;
             }
@@ -295,13 +302,15 @@ public class OutputBuffer extends Writer {
                 flushCharBuffer();
             }
             if (bb.remaining() > 0) {
+                // 写到 socket buffer 中。
                 flushByteBuffer();
             }
         } finally {
             doFlush = false;
         }
 
-        if (realFlush) {
+        if (realFlush) {  // 真的要 flush
+            // 将 socket buffer 中的数据写到 socket 中。
             coyoteResponse.action(ActionCode.CLIENT_FLUSH, null);
             // If some exception occurred earlier, or if some IOE occurred
             // here, notify the servlet with an IOE
@@ -336,6 +345,7 @@ public class OutputBuffer extends Writer {
         if (buf.remaining() > 0) {
             // real write to the adapter
             try {
+                // 写 body
                 coyoteResponse.doWrite(buf);
             } catch (CloseNowException e) {
                 // Catch this sub-class as it requires specific handling.

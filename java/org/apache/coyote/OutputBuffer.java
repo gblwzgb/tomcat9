@@ -20,6 +20,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
+ * 输出缓冲区。此类由 protocol 的实现类内部使用。
+ * 来自更高级别代码的所有写入都应通过 Response.doWrite() 进行。
+ */
+
+/**
  * Output buffer.
  *
  * This class is used internally by the protocol implementation. All writes from

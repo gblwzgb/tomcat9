@@ -671,15 +671,15 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
          * @param socketWrapper The socket wrapper
          */
         public void register(final NioChannel socket, final NioSocketWrapper socketWrapper) {
-            // 设置该客户端socket的感兴趣事件为OP_READ
+            // 设置该客户端 socket 的感兴趣事件为 OP_READ
             socketWrapper.interestOps(SelectionKey.OP_READ);//this is what OP_REGISTER turns into.
             PollerEvent event = null;
             if (eventCache != null) {
-                // 重试复用之前失效的PollerEvent
+                // 重试复用之前失效的 PollerEvent
                 event = eventCache.pop();
             }
             if (event == null) {
-                // 没有则new一个
+                // 没有则 new 一个
                 event = new PollerEvent(socket, OP_REGISTER);
             } else {
                 // 有则通过重置达到复用的目的
@@ -715,7 +715,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
          * poller for triggered events and hands the associated socket off to an
          * appropriate processor as events occur.
          */
-        // 后台线程，增加了插座的轮询，检查轮询的触发事件和手相关的插座断为事件发生时一个合适的处理器。
+        // 后台线程，增加了 sockets 的轮询，检查轮询的触发事件和手相关的插座断为事件发生时一个合适的处理器。
         @Override
         public void run() {
             // Loop until destroy() is called  （轮询直到destroy()方法被调用）

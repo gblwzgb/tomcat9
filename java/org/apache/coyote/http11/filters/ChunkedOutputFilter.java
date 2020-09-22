@@ -104,14 +104,19 @@ public class ChunkedOutputFilter implements OutputFilter {
             return 0;
         }
 
+        // 计算 chunk 头在什么位子
         int pos = calculateChunkHeader(result);
 
+        // 根据计算结果，框定 chunk 头
         chunkHeader.position(pos).limit(10);
+        // 写 chunk 头
         buffer.doWrite(chunkHeader);
 
+        // 写chunk
         buffer.doWrite(chunk);
 
         chunkHeader.position(8).limit(10);
+        // 写/r/n
         buffer.doWrite(chunkHeader);
 
         return result;
@@ -119,7 +124,7 @@ public class ChunkedOutputFilter implements OutputFilter {
 
 
     private int calculateChunkHeader(int len) {
-        // Calculate chunk header
+        // Calculate chunk header todo:不懂
         int pos = 8;
         int current = len;
         while (current > 0) {
@@ -168,6 +173,7 @@ public class ChunkedOutputFilter implements OutputFilter {
             trailerFields = trailerFieldsSupplier.get();
         }
 
+        // 写 end chunk
         if (trailerFields == null) {
             // Write end chunk
             buffer.doWrite(endChunk);
@@ -196,6 +202,7 @@ public class ChunkedOutputFilter implements OutputFilter {
             buffer.doWrite(crlfChunk);
             crlfChunk.position(0).limit(crlfChunk.capacity());
         }
+        // 将 socket buffer 的数据，flush 到 socket 中
         buffer.end();
     }
 

@@ -268,7 +268,7 @@ public final class Bootstrap {
         // 初始化类加载器
         initClassLoaders();
 
-        // 将catalinaLoader绑定到当前线程中，默认是commonClassLoader
+        // 将 catalinaLoader 绑定到当前线程中，默认是 commonClassLoader
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
         SecurityClassLoad.securityClassLoad(catalinaLoader);
@@ -276,9 +276,9 @@ public final class Bootstrap {
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
-        // 这里用自定义的serverClassLoader加载器，隔离应用对Catalina的访问（不可见）
+        // 这里用自定义的 serverClassLoader 加载器，隔离应用对 Catalina 的访问（不可见）
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
-        // 通过反射创建一个Catalina类
+        // 通过反射创建一个 Catalina 类
         Object startupInstance = startupClass.getConstructor().newInstance();
 
         // Set the shared extensions class loader
@@ -289,9 +289,9 @@ public final class Bootstrap {
         paramTypes[0] = Class.forName("java.lang.ClassLoader");
         Object paramValues[] = new Object[1];
         paramValues[0] = sharedLoader;
-        // 获取Catalina.setParentClassLoader方法
+        // 获取 Catalina.setParentClassLoader 方法
         Method method = startupInstance.getClass().getMethod(methodName, paramTypes);
-        // 调用Catalina.setParentClassLoader方法，传入sharedClassLoader
+        // 调用 Catalina.setParentClassLoader 方法，传入 sharedClassLoader
         method.invoke(startupInstance, paramValues);
 
         catalinaDaemon = startupInstance;
@@ -362,9 +362,9 @@ public final class Bootstrap {
             init();
         }
 
-        // 获取Catalina.start()方法
+        // 获取 Catalina.start() 方法
         Method method = catalinaDaemon.getClass().getMethod("start", (Class [])null);
-        // 调用Catalina.start()方法
+        // 调用 Catalina.start() 方法
         method.invoke(catalinaDaemon, (Object [])null);
     }
 
@@ -465,7 +465,7 @@ public final class Bootstrap {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
-                    // 初始化bootstrap
+                    /** 1、初始化 bootstrap */
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -496,9 +496,9 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);
-                // 内部调用了Catalina.load()
+                /** 2、内部反射调用 Catalina.load() */
                 daemon.load(args);
-                // 内部调用了Catalina.start()
+                /** 3、内部反射调用了 Catalina.start() */
                 daemon.start();
                 if (null == daemon.getServer()) {
                     System.exit(1);

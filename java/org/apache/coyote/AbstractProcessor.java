@@ -375,6 +375,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             if (!response.isCommitted()) {
                 try {
                     // Validate and write response headers
+                    // 验证 header 并写到 socket buffer 中，组装 response filter
                     prepareResponse();
                 } catch (IOException e) {
                     handleIOException(e);
@@ -383,8 +384,10 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             break;
         }
         case CLOSE: {
+            // close 之前，先进行 commit
             action(ActionCode.COMMIT, null);
             try {
+                // 追加结束符，flush 到 socket 中
                 finishResponse();
             } catch (IOException e) {
                 handleIOException(e);

@@ -262,6 +262,7 @@ public class Connector extends LifecycleMBeanBase  {
     /**
      * The URI encoding in use.
      */
+    // 解决中文乱码的，现在默认是 UTF-8 了？
     private Charset uriCharset = StandardCharsets.UTF_8;
 
 

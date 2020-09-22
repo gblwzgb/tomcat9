@@ -79,7 +79,7 @@ public class HostRuleSet implements RuleSet {
                                  "className");
         digester.addSetProperties(prefix + "Host");
         /**
-         * 将Engine记录的classLoader，复制到Host中
+         * 将 Engine记录的 classLoader，复制到 Host 中
          */
         digester.addRule(prefix + "Host",
                          new CopyParentClassLoaderRule());

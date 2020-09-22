@@ -504,6 +504,9 @@ public abstract class SocketWrapperBase<E> {
          *   use of the non-blocking write buffer
          */
         if (block) {
+            // 写到 socket buffer 中，
+            // 引入 socket buffer 是为了提升写的性能吧，从 buffer 中一起写到 socket 中，比每次都写到 socket 中性能好。
+            // 这里如果 socket buffer 写满了，会触发写 socket 的操作。
             writeBlocking(from);
         } else {
             writeNonBlocking(from);
@@ -543,6 +546,11 @@ public abstract class SocketWrapperBase<E> {
 
 
     /**
+     * 将提供的数据写入 socket 写缓冲区。如果套接字写缓冲区在写期间已满，则使用阻塞写将套接字写缓冲区的内容写入网络。
+     * 一旦阻塞写入完成，此方法将再次开始填充套接字写入缓冲区。根据要写入的数据大小，可能会多次写入网络。
+     * 完成此方法后，套接字写缓冲区中将始终有剩余空间。
+     */
+    /**
      * Writes the provided data to the socket write buffer. If the socket write
      * buffer fills during the write, the content of the socket write buffer is
      * written to the network using a blocking write. Once that blocking write
@@ -558,10 +566,13 @@ public abstract class SocketWrapperBase<E> {
     protected void writeBlocking(ByteBuffer from) throws IOException {
         if (from.hasRemaining()) {
             socketBufferHandler.configureWriteBufferForWrite();
+            // 转移到 socketBufferHandler 中的 buffer 中
             transfer(from, socketBufferHandler.getWriteBuffer());
             while (from.hasRemaining()) {
+                // 到这里说明，还没转移完，to 就写满了，就触发一次 flush
                 doWrite(true);
                 socketBufferHandler.configureWriteBufferForWrite();
+                //
                 transfer(from, socketBufferHandler.getWriteBuffer());
             }
         }

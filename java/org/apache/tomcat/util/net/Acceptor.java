@@ -22,7 +22,7 @@ import org.apache.tomcat.jni.Error;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
 
-// 类似netty中的Boss线程，就负责接收连接
+// 类似 netty 中的 Boss 线程，就负责接收连接
 public class Acceptor<U> implements Runnable {
 
     private static final Log log = LogFactory.getLog(Acceptor.class);
@@ -96,7 +96,7 @@ public class Acceptor<U> implements Runnable {
                     // Accept the next incoming connection from the server socket
                     // （接受来自服务器socket的下一个传入连接）
                     /**
-                     * accept一个客户端socket
+                     * accept 一个客户端 socket
                      */
                     socket = endpoint.serverSocketAccept();
                 } catch (Exception ioe) {

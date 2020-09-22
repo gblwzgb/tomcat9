@@ -65,6 +65,11 @@ import org.apache.tomcat.util.res.StringManager;
 // 将org.apache.coyote.Request、org.apache.coyote.Response转换成下游需要的
 // org.apache.catalina.connector.Request（HttpServletRequest）、org.apache.catalina.connector.Response（HttpServletResponse）
 // 通用的，所有请求共用这个对象。在org.apache.catalina.connector.Connector.initInternal时创建，Connector持有引用，同时Connector会在这个方法把adapter的引用传给小弟protocolHandler
+
+// 连接器和容器的桥梁
+// org.apache.coyote.Request 更接近底层 socket
+// HttpServletRequest 可以理解成应用层
+// 存在的意义：https://yq.aliyun.com/articles/241947
 public class CoyoteAdapter implements Adapter {
 
     private static final Log log = LogFactory.getLog(CoyoteAdapter.class);
@@ -344,7 +349,7 @@ public class CoyoteAdapter implements Adapter {
 
         try {
             // Parse and set Catalina and configuration specific request parameters
-            // 解析并设置Catalina和特定于配置的请求参数
+            // 解析并设置 Catalina 和特定于配置的请求参数
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
@@ -352,7 +357,7 @@ public class CoyoteAdapter implements Adapter {
                         connector.getService().getContainer().getPipeline().isAsyncSupported());
                 // Calling the container
                 /**
-                 * 调用到容器
+                 * 调用到容器，经过一些列的 valve 的调用链后，会进入用户的代码逻辑。
                  */
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);
@@ -384,7 +389,9 @@ public class CoyoteAdapter implements Adapter {
                     request.getAsyncContextInternal().setErrorState(throwable, true);
                 }
             } else {
+                // 请求完成了
                 request.finishRequest();
+                // 把流推给客户端
                 response.finishResponse();
             }
 

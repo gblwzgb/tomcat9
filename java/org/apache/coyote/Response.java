@@ -86,6 +86,7 @@ public final class Response {
     /**
      * Associated output buffer.
      */
+    // 如果该 Response 由 Http11Processor 创建，则这里为 Http11OutputBuffer
     OutputBuffer outputBuffer;
 
 
@@ -433,6 +434,8 @@ public final class Response {
      *  Any implementation needs to notify ContextManager, to allow
      *  interceptors to fix headers.
      */
+    // 表示我们已经完成 headers，and body will follow。
+    // 任何实现都需要通知ContextManager，以允许拦截器修复 headers。
     public void sendHeaders() {
         action(ActionCode.COMMIT, this);
         setCommitted(true);
