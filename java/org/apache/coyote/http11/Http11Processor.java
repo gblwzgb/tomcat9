@@ -289,8 +289,8 @@ public class Http11Processor extends AbstractProcessor {
                      * 解析header
                      */
                     if (!http09 && !inputBuffer.parseHeaders()) {
-                        // We've read part of the request, don't recycle it
-                        // instead associate it with the socket
+                        // We've read part of the request, don't recycle it instead associate it with the socket
+                        // 我们已经读了部分请求，请不要回收它，而是将其与套接字关联（半包）
                         openSocket = true;
                         readComplete = false;
                         break;

@@ -867,7 +867,11 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 processor.setSslSupport(
                         wrapper.getSslSupport(getProtocol().getClientCertProvider()));
 
-                // Associate the processor with the connection
+                // Associate the processor with the connection  （将处理器与连接关联）
+                /**
+                 * 重要，这里将 processor 和 socket 关联，这样发生半包问题的时候，只需要将 socket 不要关闭，继续使用这个 processor 即可。
+                 * 因为 processor 内部有一个 ByteBuffer，所以可以继续处理上次没解析完成的 HTTP 包。
+                 */
                 wrapper.setCurrentProcessor(processor);
 
                 SocketState state = SocketState.CLOSED;

@@ -794,7 +794,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                                     if (!socketWrapper.readOperation.process()) {
                                         closeSocket = true;
                                     }
-                                } else if (!processSocket(socketWrapper, SocketEvent.OPEN_READ, true)) {
+                                } else if (!processSocket(socketWrapper, SocketEvent.OPEN_READ, true)) {  // 进这里
                                     closeSocket = true;
                                 }
                             }

@@ -845,6 +845,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         SocketWrapperBase<?> socketWrapper = this.wrapper;
         int nRead = -1;
         if (socketWrapper != null) {
+            // 从 socket 中读数据到 byteBuffer 中
             nRead = socketWrapper.read(block, byteBuffer);
         } else {
             throw new CloseNowException(sm.getString("iib.eof.error"));
@@ -876,7 +877,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         while (headerParsePos == HeaderParsePosition.HEADER_START) {
 
             // Read new bytes if needed（根据需要读取新字节，数据读完了，才去fill一下）
-            if (byteBuffer.position() >= byteBuffer.limit()) {
+            if (byteBuffer.position() >= byteBuffer.limit()) {  // 读位点追上了限制位点，表示读完了，需要填充一下。
                 if (!fill(false)) {// parse header
                     headerParsePos = HeaderParsePosition.HEADER_START;
                     // 返回：需要更多的数据
