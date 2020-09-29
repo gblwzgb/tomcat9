@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Thread safe non blocking selector pool
  */
+// todo：这个怎么用
 public class NioSelectorPool {
 
     protected NioBlockingSelector blockingSelector;

@@ -413,10 +413,10 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
             }
             if (channel == null) {
                 SocketBufferHandler bufhandler = new SocketBufferHandler(
-                        socketProperties.getAppReadBufSize(),
-                        socketProperties.getAppWriteBufSize(),
-                        socketProperties.getDirectBuffer());
-                if (isSSLEnabled()) {
+                        socketProperties.getAppReadBufSize(),  // 默认 8192
+                        socketProperties.getAppWriteBufSize(),  // 默认 8192
+                        socketProperties.getDirectBuffer());  // 默认 false
+                if (isSSLEnabled()) {  // 开启了 SSL
                     channel = new SecureNioChannel(bufhandler, selectorPool, this);
                 } else {
                     channel = new NioChannel(bufhandler);
@@ -1584,6 +1584,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
             }
 
             try {
+                // 0表示完成 SSL 握手了
                 int handshake = -1;
                 try {
                     if (socket.isHandshakeComplete()) {
@@ -1595,6 +1596,8 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         // if the handshake failed.
                         handshake = -1;
                     } else {
+                        // 如果是非SSL的，进入 NioEndpoint，什么都没做
+                        // 如果是 SSL 的，进入 SecureNioChannel，进行 SSL 握手
                         handshake = socket.handshake(event == SocketEvent.OPEN_READ, event == SocketEvent.OPEN_WRITE);
                         // The handshake process reads/writes from/to the
                         // socket. status may therefore be OPEN_WRITE once

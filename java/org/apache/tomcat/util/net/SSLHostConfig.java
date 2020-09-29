@@ -40,6 +40,7 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Represents the TLS configuration for a virtual host.
+ * 表示虚拟主机的TLS配置。
  */
 public class SSLHostConfig implements Serializable {
 

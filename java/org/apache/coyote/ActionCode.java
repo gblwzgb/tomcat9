@@ -90,6 +90,7 @@ public enum ActionCode {
     /**
      * Force a TLS re-handshake and make the resulting client certificate (if
      * any) available as a request attribute.
+     * （强制进行TLS重新握手，并使生成的客户端证书（如果有）可用作请求属性。）
      */
     REQ_SSL_CERTIFICATE,
 

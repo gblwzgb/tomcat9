@@ -33,6 +33,7 @@ import org.apache.tomcat.util.res.StringManager;
  * This class extracts the SNI host name and ALPN protocols from a TLS
  * client-hello message.
  */
+// 此类从 TLS client-hello 消息中提取 SNI 主机名和 ALPN 协议。
 public class TLSClientHelloExtractor {
 
     private static final Log log = LogFactory.getLog(TLSClientHelloExtractor.class);
@@ -65,6 +66,14 @@ public class TLSClientHelloExtractor {
      * @param netInBuffer The buffer containing the TLS data to process
      * @throws IOException If the client hello message is malformed
      */
+    /**
+     * 创建解析器的实例并处理提供的缓冲区。
+     * 缓冲区的 position 和 limit 将在执行此方法期间进行修改，但是在方法退出之前它们将返回到原始值。（PS：快照，然后回退）
+     *
+     * @param netInBuffer 包含要处理的TLS数据的缓冲区
+     * @throws IOException 如果 client hello 消息格式错误
+     */
+    // todo：
     public TLSClientHelloExtractor(ByteBuffer netInBuffer) throws IOException {
         // Buffer is in write mode at this point. Record the current position so
         // the buffer state can be restored at the end of this method.
@@ -78,13 +87,15 @@ public class TLSClientHelloExtractor {
             // Switch to read mode.
             netInBuffer.flip();
 
-            // A complete TLS record header is required before we can figure out
-            // how many bytes there are in the record.
+            // A complete TLS record header is required before we can figure out how many bytes there are in the record.
+            // （需要一个完整的TLS记录头，才能确定记录中有多少字节。）
+            // 需要 5 个字节来读 record 头
             if (!isAvailable(netInBuffer, TLS_RECORD_HEADER_LEN)) {
                 result = handleIncompleteRead(netInBuffer);
                 return;
             }
 
+            // 校验，后面需要紧跟一个字节数字'22'，然后TLS版本是3.1及以上
             if (!isTLSHandshake(netInBuffer)) {
                 // Is the client trying to use clear text HTTP?
                 if (isHttp(netInBuffer)) {
@@ -93,15 +104,19 @@ public class TLSClientHelloExtractor {
                 return;
             }
 
+            // 读两个字节，表示 record 的 size，校验 bb 是否够用
+            // （ps：没读，但是会移动读指针，模拟读取，校验长度是否够用）
             if (!isAllRecordAvailable(netInBuffer)) {
                 result = handleIncompleteRead(netInBuffer);
                 return;
             }
 
+            // 读完 record 后，紧跟一个字节数字'1'，表示是 client hello
             if (!isClientHello(netInBuffer)) {
                 return;
             }
 
+            // 读三个字节，表示 client hello size，然后校验 bb 是否够用
             if (!isAllClientHelloAvailable(netInBuffer)) {
                 // Client hello didn't fit into single TLS record.
                 // Treat this as not present.
@@ -120,7 +135,9 @@ public class TLSClientHelloExtractor {
             // (2 bytes for length, each cipher ID is 2 bytes)
             int cipherCount = netInBuffer.getChar() / 2;
             for (int i = 0; i < cipherCount; i++) {
+                // 请求的加密套件
                 int cipherId = netInBuffer.getChar();
+                // Cipher 类内部维护了映射
                 clientRequestedCiphers.add(Cipher.valueOf(cipherId));
             }
 
@@ -129,6 +146,7 @@ public class TLSClientHelloExtractor {
 
             if (!netInBuffer.hasRemaining()) {
                 // No more data means no extensions present
+                // （没有更多数据意味着没有扩展）
                 return;
             }
 
@@ -164,6 +182,7 @@ public class TLSClientHelloExtractor {
             this.clientRequestedApplicationProtocols = clientRequestedApplicationProtocols;
             this.sniValue = sniValue;
             // Whatever happens, return the buffer to its original state
+            // （无论发生什么情况，都将缓冲区恢复为其原始状态）
             netInBuffer.limit(limit);
             netInBuffer.position(pos);
         }
@@ -357,10 +376,10 @@ public class TLSClientHelloExtractor {
 
 
     public enum ExtractorResult {
-        COMPLETE,
-        NOT_PRESENT,
-        UNDERFLOW,
-        NEED_READ,
-        NON_SECURE
+        COMPLETE,   // 完全体，包含扩展
+        NOT_PRESENT,  // 读完了，非完全体，不包含扩展
+        UNDERFLOW,  // bb不足，需要扩容
+        NEED_READ,  // 数据还没进 socket，需要继续读取
+        NON_SECURE  // 没传 TSL 的协议标志
     }
 }

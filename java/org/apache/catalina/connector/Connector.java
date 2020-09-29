@@ -184,8 +184,8 @@ public class Connector extends LifecycleMBeanBase  {
 
 
     /**
-     * The secure connection flag that will be set on all requests received
-     * through this connector.
+     * The secure connection flag that will be set on all requests received through this connector.
+     * (在通过此连接器收到的所有请求上将设置的安全连接标志。)
      */
     protected boolean secure = false;
 

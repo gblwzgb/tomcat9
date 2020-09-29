@@ -149,6 +149,19 @@ public class SecureNioChannel extends NioChannel {
     }
 
     /**
+     * 执行SSL握手（非阻塞），但在同一线程上执行NEED_TASK。
+     * 因此，永远不要使用Acceptor线程调用此方法，因为这会大大降低系统速度。
+     * 如果此方法的返回值为正，则选择键应注册为返回值给定的interestOps。
+     *
+     * @param read boolean - 如果底层 channel 渠道可读，则为true
+     * @param write boolean - 如果底层 channel 渠道可写，则为true
+     *
+     * @return 如果握手完成，则为0；如果发生错误（不是IOException），则为-1，否则返回SelectionKey interestOps值
+     *
+     * @throws IOException If an I/O error occurs during the handshake or if the
+     *                     handshake fails during wrapping or unwrapping
+     */
+    /**
      * Performs SSL handshake, non blocking, but performs NEED_TASK on the same
      * thread. Hence, you should never call this method using your Acceptor
      * thread, as you would slow down your system significantly. If the return
@@ -168,10 +181,12 @@ public class SecureNioChannel extends NioChannel {
     @Override
     public int handshake(boolean read, boolean write) throws IOException {
         if (handshakeComplete) {
-            return 0; //we have done our initial handshake
+            return 0; //we have done our initial handshake  （我们已经完成了最初的握手）
         }
 
         if (!sniComplete) {
+            // https://www.cnblogs.com/talenth/p/5820136.html
+            // Server Name Indication
             int sniResult = processSNI();
             if (sniResult == 0) {
                 sniComplete = true;
@@ -188,10 +203,14 @@ public class SecureNioChannel extends NioChannel {
 
         while (!handshakeComplete) {
             switch (handshakeStatus) {
-                case NOT_HANDSHAKING:
+                case NOT_HANDSHAKING:  // SSLEngine当前未握手。
                     //should never happen
                     throw new IOException(sm.getString("channel.nio.ssl.notHandshaking"));
                 case FINISHED:
+                    // FINISHED 的注释：
+                    // SSLEngine 刚刚完成握手。
+                    // 该值仅在调用完成一次握手时才通过调用 SSLEngine.wrap()/unwrap() 生成。
+                    // 它永远不会由 SSLEngine.getHandshakeStatus() 生成。
                     if (endpoint.hasNegotiableProtocols()) {
                         if (sslEngine instanceof SSLUtil.ProtocolInfo) {
                             socketWrapper.setNegotiatedProtocol(
@@ -202,10 +221,11 @@ public class SecureNioChannel extends NioChannel {
                         }
                     }
                     //we are complete if we have delivered the last package
+                    // （如果我们已经交付了最后一个包裹，我们就完成了）
                     handshakeComplete = !netOutBuffer.hasRemaining();
                     //return 0 if we are complete, otherwise we still have data to write
                     return handshakeComplete ? 0 : SelectionKey.OP_WRITE;
-                case NEED_WRAP:
+                case NEED_WRAP:  // SSLEngine 必须先将数据发送到远程端，然后才能继续握手，因此应调用SSLEngine.wrap()。
                     //perform the wrap function
                     try {
                         handshake = handshakeWrap(write);
@@ -233,7 +253,7 @@ public class SecureNioChannel extends NioChannel {
                     //fall down to NEED_UNWRAP on the same call, will result in a
                     //BUFFER_UNDERFLOW if it needs data
                 //$FALL-THROUGH$
-                case NEED_UNWRAP:
+                case NEED_UNWRAP:  // SSLEngine 需要先从远程接收数据，然后才能继续进行握手。
                     //perform the unwrap function
                     handshake = handshakeUnwrap(read);
                     if (handshake.getStatus() == Status.OK) {
@@ -247,7 +267,7 @@ public class SecureNioChannel extends NioChannel {
                         throw new IOException(sm.getString("channel.nio.ssl.unexpectedStatusDuringWrap", handshake.getStatus()));
                     }
                     break;
-                case NEED_TASK:
+                case NEED_TASK:  // SSLEngine 需要一个（或多个）委派任务的结果，然后握手才能继续。
                     handshakeStatus = tasks();
                     break;
                 default:
@@ -272,13 +292,16 @@ public class SecureNioChannel extends NioChannel {
      */
     private int processSNI() throws IOException {
         // Read some data into the network input buffer so we can peek at it.
+        // （将一些数据读入网络输入缓冲区，以便我们进行 peek。）
         int bytesRead = sc.read(netInBuffer);
         if (bytesRead == -1) {
             // Reached end of stream before SNI could be processed.
             return -1;
         }
+        // 创建一个 TLSClientHello 提取器
         TLSClientHelloExtractor extractor = new TLSClientHelloExtractor(netInBuffer);
 
+        // sniParseLimit 默认 64K
         while (extractor.getResult() == ExtractorResult.UNDERFLOW &&
                 netInBuffer.capacity() < endpoint.getSniParseLimit()) {
             // extractor needed more data to process but netInBuffer was full so
@@ -287,8 +310,10 @@ public class SecureNioChannel extends NioChannel {
             log.info(sm.getString("channel.nio.ssl.expandNetInBuffer",
                     Integer.toString(newLimit)));
 
+            // 扩容到指定的大小
             netInBuffer = ByteBufferUtils.expand(netInBuffer, newLimit);
             sc.read(netInBuffer);
+            // 重新创建一个提取器
             extractor = new TLSClientHelloExtractor(netInBuffer);
         }
 
@@ -297,11 +322,14 @@ public class SecureNioChannel extends NioChannel {
         List<String> clientRequestedApplicationProtocols = null;
         switch (extractor.getResult()) {
         case COMPLETE:
+            // 获取 SNI 的 hostName
             hostName = extractor.getSNIValue();
+            // 获取客户端请求的应用协议
             clientRequestedApplicationProtocols =
                     extractor.getClientRequestedApplicationProtocols();
             //$FALL-THROUGH$ to set the client requested ciphers
         case NOT_PRESENT:
+            // 获取客户端请求的加密套件
             clientRequestedCiphers = extractor.getClientRequestedCiphers();
             break;
         case NEED_READ:
@@ -314,7 +342,7 @@ public class SecureNioChannel extends NioChannel {
             hostName = endpoint.getDefaultSSLHostConfigName();
             clientRequestedCiphers = Collections.emptyList();
             break;
-        case NON_SECURE:
+        case NON_SECURE:  // 未传 TSL 协议的标志
             netOutBuffer.clear();
             netOutBuffer.put(TLSClientHelloExtractor.USE_TLS_RESPONSE);
             netOutBuffer.flip();
@@ -326,11 +354,12 @@ public class SecureNioChannel extends NioChannel {
             log.debug(sm.getString("channel.nio.ssl.sniHostName", sc, hostName));
         }
 
+        // 创建 sslEngine 并设置一些配置参数
         sslEngine = endpoint.createSSLEngine(hostName, clientRequestedCiphers,
                 clientRequestedApplicationProtocols);
 
-        // Ensure the application buffers (which have to be created earlier) are
-        // big enough.
+        // Ensure the application buffers (which have to be created earlier) are big enough.
+        // 确保应用程序缓冲区（必须早些创建）足够大。
         getBufHandler().expand(sslEngine.getSession().getApplicationBufferSize());
         if (netOutBuffer.capacity() < sslEngine.getSession().getApplicationBufferSize()) {
             // Info for now as we may need to increase DEFAULT_NET_BUFFER_SIZE
@@ -344,8 +373,9 @@ public class SecureNioChannel extends NioChannel {
         netOutBuffer.position(0);
         netOutBuffer.limit(0);
 
-        // Initiate handshake
+        // Initiate handshake  （启动握手）
         sslEngine.beginHandshake();
+        // 这里应该是 HandshakeStatus.NEED_UNWRAP
         handshakeStatus = sslEngine.getHandshakeStatus();
 
         return 0;
@@ -483,6 +513,7 @@ public class SecureNioChannel extends NioChannel {
         }
         if (doread)  {
             //if we have data to read, read it
+            // 从 socket 中读数据到 netInBuffer 中。
             int read = sc.read(netInBuffer);
             if (read == -1) {
                 throw new IOException(sm.getString("channel.nio.ssl.eofDuringHandshake"));
@@ -496,6 +527,7 @@ public class SecureNioChannel extends NioChannel {
             netInBuffer.flip();
             //call unwrap
             getBufHandler().configureReadBufferForWrite();
+            // 解码
             result = sslEngine.unwrap(netInBuffer, getBufHandler().getReadBuffer());
             //compact the buffer, this is an optional method, wonder what would happen if we didn't
             netInBuffer.compact();
@@ -600,6 +632,7 @@ public class SecureNioChannel extends NioChannel {
         }
 
         //read from the network
+        // 读数据到 netInBuffer 上，不能直接读到 dst 上，因为还需要解码
         int netread = sc.read(netInBuffer);
         //did we reach EOF? if so send EOF up one layer.
         if (netread == -1) {
@@ -614,6 +647,7 @@ public class SecureNioChannel extends NioChannel {
             //prepare the buffer
             netInBuffer.flip();
             //unwrap the data
+            // 解码 HTTPS 的加密内容
             unwrap = sslEngine.unwrap(netInBuffer, dst);
             //compact the buffer
             netInBuffer.compact();
@@ -799,6 +833,7 @@ public class SecureNioChannel extends NioChannel {
             // The data buffer is empty, we can reuse the entire buffer.
             netOutBuffer.clear();
 
+            /** 写之前经过 SSL 加密 */
             SSLEngineResult result = sslEngine.wrap(src, netOutBuffer);
             // The number of bytes written
             int written = result.bytesConsumed();
@@ -836,6 +871,7 @@ public class SecureNioChannel extends NioChannel {
         // The data buffer is empty, we can reuse the entire buffer.
         netOutBuffer.clear();
 
+        /** 写之前经过 SSL 加密 */
         SSLEngineResult result = sslEngine.wrap(srcs, offset, length, netOutBuffer);
         // The number of bytes written
         int written = result.bytesConsumed();

@@ -482,7 +482,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             break;
         }
 
-        // SSL request attribute support
+        // SSL request attribute support  （SSL 请求属性支持）
         case REQ_SSL_ATTRIBUTE: {
             populateSslRequestAttributes();
             break;
@@ -774,9 +774,14 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      * attributes from a different source (e.g. AJP) should override this
      * method.
      */
+    /**
+     * 从与此 processor 关联的 SSLSupport 实例填充与TLS相关的请求属性。
+     * 从其他来源（例如AJP）填充TLS属性的协议应覆盖此方法。
+     */
     protected void populateSslRequestAttributes() {
         try {
             if (sslSupport != null) {
+                // 获取加密套件
                 Object sslO = sslSupport.getCipherSuite();
                 if (sslO != null) {
                     request.setAttribute(SSLSupport.CIPHER_SUITE_KEY, sslO);
@@ -787,8 +792,9 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
                 }
                 sslO = sslSupport.getKeySize();
                 if (sslO != null) {
-                    request.setAttribute (SSLSupport.KEY_SIZE_KEY, sslO);
+                    request.setAttribute(SSLSupport.KEY_SIZE_KEY, sslO);
                 }
+                // 获取 sessionId
                 sslO = sslSupport.getSessionId();
                 if (sslO != null) {
                     request.setAttribute(SSLSupport.SESSION_ID_KEY, sslO);

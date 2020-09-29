@@ -22,6 +22,10 @@ import org.apache.tomcat.util.net.SSLSupport;
 public class TLSUtil {
 
     /**
+     * 确定是否使用命名的请求属性将有关连接的TLS配置的信息传递给应用程序。
+     * 支持Servlet规范定义的标准请求属性和Tomcat特定的属性。
+     */
+    /**
      * Determines if the named request attribute is used to pass information
      * about the TLS configuration of the connection to the application. Both
      * the standard request attributes defined by the Servlet specification and

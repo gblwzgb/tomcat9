@@ -106,8 +106,10 @@ public abstract class AbstractJsseEndpoint<S,U> extends AbstractEndpoint<S,U> {
 
     protected SSLEngine createSSLEngine(String sniHostName, List<Cipher> clientRequestedCiphers,
             List<String> clientRequestedApplicationProtocols) {
+        // 获取 SSLHostConfig 配置，server.xml 里没配置的话，会使用默认的。
         SSLHostConfig sslHostConfig = getSSLHostConfig(sniHostName);
 
+        // 选择一个证书
         SSLHostConfigCertificate certificate = selectCertificate(sslHostConfig, clientRequestedCiphers);
 
         SSLContext sslContext = certificate.getSslContext();
@@ -116,12 +118,19 @@ public abstract class AbstractJsseEndpoint<S,U> extends AbstractEndpoint<S,U> {
                     sm.getString("endpoint.jsse.noSslContext", sniHostName));
         }
 
+        // 创建 SSLEngine
         SSLEngine engine = sslContext.createSSLEngine();
+        // 这里 false 表示是 Server 端，内部就会使用 ServerHandshaker。
+        // （相应的，Client 端就会使用 ClientHandshaker ）
         engine.setUseClientMode(false);
+        // 设置启用的密码套件
         engine.setEnabledCipherSuites(sslHostConfig.getEnabledCiphers());
+        // 设置启用的协议
         engine.setEnabledProtocols(sslHostConfig.getEnabledProtocols());
 
+        // 设置 SSL 参数
         SSLParameters sslParameters = engine.getSSLParameters();
+        // 设置使用密码套件顺序
         sslParameters.setUseCipherSuitesOrder(sslHostConfig.getHonorCipherOrder());
         if (JreCompat.isAlpnSupported() && clientRequestedApplicationProtocols != null
                 && clientRequestedApplicationProtocols.size() > 0
@@ -137,20 +146,25 @@ public abstract class AbstractJsseEndpoint<S,U> extends AbstractEndpoint<S,U> {
                 JreCompat.getInstance().setApplicationProtocols(sslParameters, commonProtocolsArray);
             }
         }
+        // 证书验证
         switch (sslHostConfig.getCertificateVerification()) {
-        case NONE:
+        case NONE:  // 没设置
+            // 设置是否需要客户端身份验证。调用此方法将清除wantClientAuth标志。
             sslParameters.setNeedClientAuth(false);
+            // 设置是否应请求客户端身份验证。调用此方法将清除needClientAuth标志。
             sslParameters.setWantClientAuth(false);
             break;
         case OPTIONAL:
         case OPTIONAL_NO_CA:
+            // 设置是否应请求客户端身份验证。调用此方法将清除needClientAuth标志。
             sslParameters.setWantClientAuth(true);
             break;
-        case REQUIRED:
+        case REQUIRED:  // 需要客户端验证身份
+            // 设置是否需要客户端身份验证。调用此方法将清除wantClientAuth标志。
             sslParameters.setNeedClientAuth(true);
             break;
         }
-        // The getter (at least in OpenJDK and derivatives) returns a defensive copy
+        // The getter (at least in OpenJDK and derivatives) returns a defensive copy  （防御性拷贝）
         engine.setSSLParameters(sslParameters);
 
         return engine;

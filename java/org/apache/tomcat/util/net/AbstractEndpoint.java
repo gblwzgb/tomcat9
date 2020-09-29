@@ -253,6 +253,7 @@ public abstract class AbstractEndpoint<S,U> {
         if (bindState != BindState.UNBOUND && bindState != BindState.SOCKET_CLOSED_ON_STOP &&
                 isSSLEnabled()) {
             try {
+                // 创建一个 SSL 的上下文
                 createSSLContext(sslHostConfig);
             } catch (Exception e) {
                 throw new IllegalArgumentException(e);
@@ -374,6 +375,7 @@ public abstract class AbstractEndpoint<S,U> {
 
         if (sniHostName != null) {
             // First choice - direct match
+            // 直接匹配
             result = sslHostConfigs.get(sniHostName);
             if (result != null) {
                 return result;
@@ -387,6 +389,7 @@ public abstract class AbstractEndpoint<S,U> {
 
         // Fall-back. Use the default
         if (result == null) {
+            // 兜底，使用默认的。
             result = sslHostConfigs.get(getDefaultSSLHostConfigName());
         }
         if (result == null) {

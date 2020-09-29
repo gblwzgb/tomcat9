@@ -51,6 +51,7 @@ class JSSESSLContext implements SSLContext {
             throws KeyManagementException {
         this.kms = kms;
         this.tms = tms;
+        // 这里会把 X509ExtendedKeyManager 传进去
         context.init(kms, tms, sr);
     }
 

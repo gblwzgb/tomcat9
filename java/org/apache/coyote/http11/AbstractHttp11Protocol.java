@@ -508,6 +508,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
 
 
         // ALPN
+        // PS：ALPN (Application Layer Protocol Negotiation)是TLS的扩展，允许在安全连接的基础上进行应用层协议的协商。ALPN支持任意应用层协议的协商，目前应用最多是HTTP2的协商。在2016年，ALPN已经完全替代NPN了。
         String alpnName = upgradeProtocol.getAlpnName();
         if (alpnName != null && alpnName.length() > 0) {
             if (getEndpoint().isAlpnSupported()) {
@@ -616,13 +617,16 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
         if (defaultSSLHostConfig == null) {
             for (SSLHostConfig sslHostConfig : findSslHostConfigs()) {
                 if (getDefaultSSLHostConfigName().equals(sslHostConfig.getHostName())) {
+                    // 如果 server.xml 里配置了同 hostname 的 SSLHostConfig，则直接拿来用
                     defaultSSLHostConfig = sslHostConfig;
                     break;
                 }
             }
             if (defaultSSLHostConfig == null) {
+                // 否则创建一个默认的
                 defaultSSLHostConfig = new SSLHostConfig();
                 defaultSSLHostConfig.setHostName(getDefaultSSLHostConfigName());
+                // 添加到 Map 缓存起来，<hostname，SSLHostConfig>
                 getEndpoint().addSslHostConfig(defaultSSLHostConfig);
             }
         }
