@@ -242,7 +242,9 @@ public abstract class SSLUtilBase implements SSLUtil {
 
     @Override
     public final SSLContext createSSLContext(List<String> negotiableProtocols) throws Exception {
+        // 创建一个 Tomcat 内部的 SSLContext
         SSLContext sslContext = createSSLContextInternal(negotiableProtocols);
+        // 初始化一些参数
         sslContext.init(getKeyManagers(), getTrustManagers(), null);
 
         SSLSessionContext sessionContext = sslContext.getServerSessionContext();

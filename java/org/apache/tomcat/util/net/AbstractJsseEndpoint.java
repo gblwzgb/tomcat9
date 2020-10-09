@@ -94,11 +94,14 @@ public abstract class AbstractJsseEndpoint<S,U> extends AbstractEndpoint<S,U> {
 
             SSLContext sslContext;
             try {
+                // 创建一个 sslContext
+                // negotiableProtocols 只有 OpenSSL 会用到。Jdk 的 SSL 不用
                 sslContext = sslUtil.createSSLContext(negotiableProtocols);
             } catch (Exception e) {
                 throw new IllegalArgumentException(e.getMessage(), e);
             }
 
+            // 为 certificate 设置一个 sslContext
             certificate.setSslContext(sslContext);
         }
     }

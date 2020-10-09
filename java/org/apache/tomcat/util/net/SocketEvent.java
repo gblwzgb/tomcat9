@@ -21,6 +21,11 @@ package org.apache.tomcat.util.net;
  * container. Usually these events are triggered by the socket implementation
  * but they may be triggered by the container.
  */
+
+/**
+ * 定义每个 socket 发生的事件，需要容器进一步处理。
+ * 通常，这些事件是由 socket implementation 触发的，但它们可能是由容器触发的。
+ */
 public enum SocketEvent {
 
     /**

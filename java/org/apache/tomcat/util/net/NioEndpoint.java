@@ -1615,12 +1615,14 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                     handshake = -1;
                 }
                 if (handshake == 0) {
+                    // 表示握手完成了
                     SocketState state = SocketState.OPEN;
                     // Process the request from this socket  （处理来自此socket的请求）
                     /**
                      * 处理请求
                      */
                     if (event == null) {
+                        // 事件为：数据可读了
                         state = getHandler().process(socketWrapper, SocketEvent.OPEN_READ);
                     } else {
                         state = getHandler().process(socketWrapper, event);
@@ -1632,8 +1634,10 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                     getHandler().process(socketWrapper, SocketEvent.CONNECT_FAIL);
                     poller.cancelledKey(socket.getIOChannel().keyFor(poller.getSelector()), socketWrapper);
                 } else if (handshake == SelectionKey.OP_READ){
+                    // 握手还没有完成，需要读更多的数据。
                     socketWrapper.registerReadInterest();
                 } else if (handshake == SelectionKey.OP_WRITE){
+                    // 握手还没有完成，需要写数据。
                     socketWrapper.registerWriteInterest();
                 }
             } catch (CancelledKeyException cx) {
