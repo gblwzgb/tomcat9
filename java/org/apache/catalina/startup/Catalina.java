@@ -646,6 +646,7 @@ public class Catalina {
     /**
      * Start a new server instance.
      */
+    // 被 Bootstrap 反射调用的，所以是无法直接搜到调用的地方的- -
     public void start() {
 
         if (getServer() == null) {

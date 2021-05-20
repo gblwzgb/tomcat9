@@ -52,6 +52,7 @@ import org.apache.juli.logging.LogFactory;
  * 此应用程序构造一个类加载器，用于加载Catalina内部类（通过累积在"catalina.home"下"server"目录中找到的所有JAR文件），并开始容器的常规执行。
  * 这种环回方法的目的是将Catalina内部类(以及它们依赖的任何其他类，例如XML解析器)保持在系统类路径之外，因此对于应用程序级类不可见。
  */
+// 启动脚本会使用这个类，见 catlina.sh 第 400 行
 public final class Bootstrap {
 
     private static final Log log = LogFactory.getLog(Bootstrap.class);

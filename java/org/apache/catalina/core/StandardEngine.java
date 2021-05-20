@@ -260,7 +260,7 @@ public class StandardEngine extends ContainerBase implements Engine {
             log.info(sm.getString("standardEngine.start", ServerInfo.getServerInfo()));
         }
 
-        // Standard container startup
+        // 异步启动子容器 context 们
         super.startInternal();
     }
 

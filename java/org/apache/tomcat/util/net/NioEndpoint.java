@@ -615,6 +615,8 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
          *
          * @return 如果有事件被处理了，返回false。如果队列是空的，返回false
          */
+        // 处理任务的，什么任务？
+        // 要修改感兴趣事件！
         public boolean events() {
             boolean result = false;
 
@@ -624,13 +626,14 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                 NioChannel channel = pe.getSocket();
                 NioSocketWrapper socketWrapper = channel.getSocketWrapper();
                 int interestOps = pe.getInterestOps();
-                if (interestOps == OP_REGISTER) {
+                if (interestOps == OP_REGISTER) {  // 注册事件
                     try {
+                        // 将 socket 注册到 Selector 上，并关联 socketWrapper 对象
                         channel.getIOChannel().register(getSelector(), SelectionKey.OP_READ, socketWrapper);
                     } catch (Exception x) {
                         log.error(sm.getString("endpoint.nio.registerFail"), x);
                     }
-                } else {
+                } else {  // 修改 socket 感兴趣的事件
                     final SelectionKey key = channel.getIOChannel().keyFor(getSelector());
                     if (key == null) {
                         // The key was cancelled (e.g. due to socket closure)
@@ -670,6 +673,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
          * @param socket    The newly created socket
          * @param socketWrapper The socket wrapper
          */
+        // 亮点：通过复用 PollerEvent，降低 GC 的压力。
         public void register(final NioChannel socket, final NioSocketWrapper socketWrapper) {
             // 设置该客户端 socket 的感兴趣事件为 OP_READ
             socketWrapper.interestOps(SelectionKey.OP_READ);//this is what OP_REGISTER turns into.
@@ -766,6 +770,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         iterator.remove();
                     } else {
                         iterator.remove();
+                        // 处理有事件的 socket
                         processKey(sk, socketWrapper);
                     }
                 }

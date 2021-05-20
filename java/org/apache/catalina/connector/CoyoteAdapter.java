@@ -350,6 +350,7 @@ public class CoyoteAdapter implements Adapter {
         try {
             // Parse and set Catalina and configuration specific request parameters
             // 解析并设置 Catalina 和特定于配置的请求参数
+            /** 这里面决定了调用哪个 context、wrapper */
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
@@ -359,6 +360,7 @@ public class CoyoteAdapter implements Adapter {
                 /**
                  * 调用到容器，经过一些列的 valve 的调用链后，会进入用户的代码逻辑。
                  */
+                // 这里的 connector 和 adapter 的互相引用建立过程，发生在 connector 的 init 阶段。
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);
             }
@@ -717,6 +719,7 @@ public class CoyoteAdapter implements Adapter {
 
         while (mapRequired) {
             // This will map the the latest version by default  (默认情况下，它将映射最新版本)
+            /** 这里的 map 方法，会为 request 对象，设置好相应的 host、context 等容器，用于后续决定调用哪个 */
             connector.getService().getMapper().map(serverName, decodedURI,
                     version, request.getMappingData());
 

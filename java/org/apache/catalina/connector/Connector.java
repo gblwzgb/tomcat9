@@ -1008,7 +1008,7 @@ public class Connector extends LifecycleMBeanBase  {
 
         // Initialize adapter  （初始化适配器）
         adapter = new CoyoteAdapter(this);
-        // Http11NioProtocol设置一个适配器
+        // Http11NioProtocol 设置一个适配器。适配器最后转发的时候，就可以通过引用：适配器 -> connector -> service 容器
         protocolHandler.setAdapter(adapter);
         if (service != null) {
             // 将StandardServer中的ScheduledExecutorService，传递给Http11NioProtocol

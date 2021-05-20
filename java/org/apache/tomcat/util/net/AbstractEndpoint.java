@@ -1098,6 +1098,7 @@ public abstract class AbstractEndpoint<S,U> {
             if (socketWrapper == null) {
                 return false;
             }
+            // SocketProcessorBase 可以复用，减低 GC 的压力。
             SocketProcessorBase<S> sc = null;
             if (processorCache != null) {
                 sc = processorCache.pop();
@@ -1249,7 +1250,9 @@ public abstract class AbstractEndpoint<S,U> {
         String threadName = getName() + "-Acceptor";
         acceptor.setThreadName(threadName);
         Thread t = new Thread(acceptor, threadName);
+        // 默认 5
         t.setPriority(getAcceptorThreadPriority());
+        // 默认守护线程
         t.setDaemon(getDaemon());
         t.start();
     }

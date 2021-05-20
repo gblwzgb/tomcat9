@@ -45,6 +45,7 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Remy Maucherat
  */
+// 用于决定一个请求，应该哪个 Host、Context 等来处理
 public final class Mapper {
 
 
@@ -283,6 +284,7 @@ public final class Mapper {
             ContextVersion newContextVersion = new ContextVersion(version,
                     path, slashCount, context, resources, welcomeResources);
             if (wrappers != null) {
+                /** 注册 wrapper */
                 addWrappers(newContextVersion, wrappers);
             }
 

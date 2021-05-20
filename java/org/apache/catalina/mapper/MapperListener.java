@@ -45,6 +45,8 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Remy Maucherat
  * @author Costin Manolache
  */
+// 在 startInternal 阶段会注册 host、context、wrappers 到 Mapper 中。
+    // 本身是一个监听器，当有新的容器添加事件触发时，会将新的容器注册到 Mapper 中。
 public class MapperListener extends LifecycleMBeanBase
         implements ContainerListener, LifecycleListener {
 
@@ -110,6 +112,7 @@ public class MapperListener extends LifecycleMBeanBase
             Host host = (Host) conHost;
             if (!LifecycleState.NEW.equals(host.getState())) {
                 // Registering the host will register the context and wrappers
+                /** 注册 host，同时注册子容器 context、wrappers */
                 registerHost(host);
             }
         }
@@ -302,6 +305,7 @@ public class MapperListener extends LifecycleMBeanBase
         String[] aliases = host.findAliases();
         mapper.addHost(host.getName(), aliases, host);
 
+        // 注册 context
         for (Container container : host.findChildren()) {
             if (container.getState().isAvailable()) {
                 registerContext((Context) container);
@@ -368,6 +372,7 @@ public class MapperListener extends LifecycleMBeanBase
     /**
      * Register context.
      */
+    // 注册 context
     private void registerContext(Context context) {
 
         String contextPath = context.getPath();

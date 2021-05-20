@@ -119,7 +119,7 @@ public class Acceptor<U> implements Runnable {
                     // setSocketOptions() will hand the socket off to an appropriate processor if successful
                     // setSocketOptions()方法如果成功，会将socket移交给适当的处理器
                     /**
-                     * 传递下去
+                     * 将 socket 交由 Poller 处理
                      */
                     if (!endpoint.setSocketOptions(socket)) {
                         // setSocketOptions()方法如果失败，关闭socket
